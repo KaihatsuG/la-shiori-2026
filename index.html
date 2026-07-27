@@ -93,7 +93,7 @@ button:disabled{opacity:.6}
     ページのソースを見ても中身は読めません。
   </div>
 
-  <div class="foot">LA DODGERS FAMILY TRIP 2026</div>
+  <div class="foot">LA DODGERS FAMILY TRIP 2026<br>版 <span id="ver">20260727-1854</span></div>
 </div>
 
 <script>
@@ -134,7 +134,8 @@ function unlock(pass, remember){
   msg.className = "msg"; msg.textContent = "しおりを読み込んでいます…";
 
   var gzipped = false;
-  return fetch("payload.json", { cache: "force-cache" })
+  /* cache指定はしない。SW側が「オンラインなら最新／オフラインならキャッシュ」を判断する */
+  return fetch("payload.json")
     .then(function(r){ if (!r.ok) throw new Error("payload " + r.status); return r.json(); })
     .then(function(p){
       gzipped = !!p.gz;

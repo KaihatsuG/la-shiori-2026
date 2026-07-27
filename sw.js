@@ -1,20 +1,21 @@
 /* LA2026 しおり — オフライン用サービスワーカー
-   すべてを端末にキャッシュし、以後はネットワークなしで動かす。 */
-var CACHE = "la2026-v1";
-var ASSETS = [
-  "./",
-  "index.html",
-  "payload.json",
-  "manifest.webmanifest",
-  
-  
-  "icon.png"
-];
+   方針：オンラインなら必ず最新を取りに行き、失敗したらキャッシュを返す。
+   （以前は「キャッシュ優先」だったため、更新しても古い版が表示され続けていた） */
+var VERSION = "20260727-1854";
+var CACHE   = "la2026-" + VERSION;
+var ASSETS  = ["./", "index.html", "payload.json", "manifest.webmanifest", "icon.png"];
 
 self.addEventListener("install", function(e){
   e.waitUntil(
     caches.open(CACHE)
-      .then(function(c){ return c.addAll(ASSETS); })
+      .then(function(c){
+        /* 確実に取り直すため、キャッシュを迂回して取得する */
+        return Promise.all(ASSETS.map(function(u){
+          return fetch(new Request(u, { cache: "reload" }))
+            .then(function(r){ if (r && r.ok) return c.put(u, r); })
+            .catch(function(){});
+        }));
+      })
       .then(function(){ return self.skipWaiting(); })
   );
 });
@@ -31,35 +32,32 @@ self.addEventListener("activate", function(e){
   );
 });
 
-/* キャッシュ優先。オフラインでも必ず開けることを最優先する。 */
+/* ネットワーク優先。つながらないときだけキャッシュを使う。 */
 self.addEventListener("fetch", function(e){
   var req = e.request;
   if (req.method !== "GET") return;
-  var url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+  if (new URL(req.url).origin !== self.location.origin) return;
 
   e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then(function(hit){
-      if (hit) {
-        /* 裏で静かに更新（オンライン時のみ成功する） */
-        fetch(req).then(function(res){
-          if (res && res.ok) caches.open(CACHE).then(function(c){ c.put(req, res.clone()); });
-        }).catch(function(){});
-        return hit;
-      }
-      return fetch(req)
-        .then(function(res){
-          if (res && res.ok) {
-            var copy = res.clone();
-            caches.open(CACHE).then(function(c){ c.put(req, copy); });
-          }
-          return res;
-        })
-        .catch(function(){
-          /* 未キャッシュのページ要求は入口に戻す */
+    fetch(req)
+      .then(function(res){
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function(c){ c.put(req, copy); });
+        }
+        return res;
+      })
+      .catch(function(){
+        return caches.match(req, { ignoreSearch: true }).then(function(hit){
+          if (hit) return hit;
           if (req.mode === "navigate") return caches.match("index.html");
           throw new Error("offline");
         });
-    })
+      })
   );
+});
+
+/* ページから版番号を問い合わせられるようにする */
+self.addEventListener("message", function(e){
+  if (e.data === "version" && e.source) e.source.postMessage({ version: VERSION });
 });
