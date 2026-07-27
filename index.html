@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#00306b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LA 2026">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>LA DODGERS TRIP 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#005A9C;--dk:#00306b;--gold:#F2C14E;--grass:#3f9b5c;--red:#EF3E42}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",Roboto,"Noto Sans JP","Noto Sans CJK JP",sans-serif;
+  background:#0a1220;color:#eaf2ff;min-height:100vh;line-height:1.7;
+  display:flex;align-items:center;justify-content:center;padding:26px 20px;
+  padding-top:calc(26px + env(safe-area-inset-top));
+  padding-bottom:calc(26px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+.w{width:100%;max-width:420px}
+.mark{
+  width:76px;height:76px;border-radius:20px;margin:0 auto 18px;
+  background:linear-gradient(150deg,#0a6ec0,#005A9C 45%,#00285c);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:800;letter-spacing:-2px;color:#fff;
+  box-shadow:0 10px 30px rgba(0,90,156,.5)
+}
+h1{font-size:19px;font-weight:800;text-align:center;line-height:1.35}
+.sub{font-size:12.5px;color:#8fa9c6;text-align:center;margin-top:5px;margin-bottom:26px}
+label{display:block;font-size:11.5px;font-weight:700;color:#8fa9c6;letter-spacing:.08em;margin-bottom:7px}
+input[type=password],input[type=text]{
+  width:100%;background:#152540;border:1px solid rgba(255,255,255,.2);border-radius:13px;
+  padding:15px 16px;color:#eaf2ff;font-size:17px;font-family:inherit;outline:none;
+  -webkit-appearance:none
+}
+input:focus{border-color:#4a9fe0;box-shadow:0 0 0 3px rgba(74,159,224,.2)}
+button{
+  width:100%;margin-top:12px;background:linear-gradient(145deg,var(--blue),var(--dk));
+  color:#fff;border:0;border-radius:13px;padding:16px;font-size:16px;font-weight:800;
+  font-family:inherit;cursor:pointer;box-shadow:0 8px 24px rgba(0,90,156,.42)
+}
+button:disabled{opacity:.6}
+.chk{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:13px;color:#a8bdd8;cursor:pointer}
+.chk input{width:19px;height:19px;accent-color:var(--blue)}
+.msg{margin-top:14px;font-size:13.5px;min-height:22px;text-align:center}
+.msg.err{color:#ff8a8d}
+.msg.ok{color:#68d18e}
+.bar{height:4px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:14px;display:none}
+.bar.on{display:block}
+.bar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,var(--gold),#FF7A45);
+  animation:sl 1.1s ease-in-out infinite}
+@keyframes sl{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+.tip{
+  margin-top:26px;background:#132339;border-left:3px solid var(--gold);
+  padding:13px 14px;border-radius:0 11px 11px 0;font-size:12.5px;color:#c2d5ea
+}
+.tip b{color:#fff}
+.tip+.tip{margin-top:10px}
+.tip.g{border-color:var(--grass)}
+.foot{margin-top:22px;text-align:center;font-size:11px;color:#5d7590;line-height:1.8}
+@media (prefers-reduced-motion:reduce){.bar i{animation:none;width:100%}}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="mark">LA</div>
+  <h1>ドジャース観戦の旅 2026</h1>
+  <div class="sub">野村家 ・ São Paulo → Los Angeles</div>
+
+  <form id="f" autocomplete="off">
+    <label for="p">あいことば</label>
+    <input id="p" type="password" inputmode="text" autocapitalize="none"
+           autocorrect="off" spellcheck="false" placeholder="家族で決めた合い言葉">
+    <label class="chk"><input type="checkbox" id="r" checked>この端末では次回から省略する</label>
+    <button type="submit" id="b">ひらく</button>
+  </form>
+
+  <div class="bar" id="bar"><i></i></div>
+  <div class="msg" id="m"></div>
+
+  <div class="tip g" id="tipInstall" style="display:none">
+    📲 <b>ホーム画面に追加すると、電波がなくても開けます。</b>
+    <span id="howto"></span>
+  </div>
+  <div class="tip">
+    🔒 しおりの中身は<b>暗号化して保管</b>されています。合い言葉なしでは、
+    ページのソースを見ても中身は読めません。
+  </div>
+
+  <div class="foot">LA DODGERS FAMILY TRIP 2026</div>
+</div>
+
+<script>
+"use strict";
+var $ = function(i){ return document.getElementById(i); };
+var msg = $("m"), bar = $("bar"), btn = $("b");
+
+/* ---------- Service Worker（オフライン化の要） ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+
+/* ---------- インストール案内 ---------- */
+var ua = navigator.userAgent;
+var isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.indexOf("Mac") >= 0 && "ontouchend" in document);
+var standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+if (!standalone) {
+  $("tipInstall").style.display = "block";
+  $("howto").innerHTML = isIOS
+    ? '<br>Safariの<b>共有ボタン（□に↑）→「ホーム画面に追加」</b>'
+    : '<br>Chromeの<b>メニュー（⋮）→「アプリをインストール」</b>';
+}
+
+/* ---------- 復号 ---------- */
+var enc = new TextEncoder(), dec = new TextDecoder();
+function b64(s){
+  var bin = atob(s), u = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function open_(html){
+  document.open(); document.write(html); document.close();
+}
+function unlock(pass, remember){
+  btn.disabled = true; bar.classList.add("on");
+  msg.className = "msg"; msg.textContent = "しおりを読み込んでいます…";
+
+  var gzipped = false;
+  return fetch("payload.json", { cache: "force-cache" })
+    .then(function(r){ if (!r.ok) throw new Error("payload " + r.status); return r.json(); })
+    .then(function(p){
+      gzipped = !!p.gz;
+      return crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"])
+        .then(function(km){
+          return crypto.subtle.deriveKey(
+            { name:"PBKDF2", salt:b64(p.salt), iterations:p.iter, hash:"SHA-256" },
+            km, { name:"AES-GCM", length:256 }, false, ["decrypt"]);
+        })
+        .then(function(key){
+          return crypto.subtle.decrypt({ name:"AES-GCM", iv:b64(p.iv) }, key, b64(p.ct));
+        });
+    })
+    .then(function(buf){
+      /* v2 以降は gzip 圧縮されている */
+      if (!gzipped) return dec.decode(buf);
+      if (typeof DecompressionStream === "undefined") {
+        throw new Error("この端末のブラウザが古いため展開できません");
+      }
+      var s = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+      return new Response(s).text();
+    })
+    .then(function(html){
+      if (remember) { try { localStorage.setItem("la26_pass", pass); } catch(e){} }
+      msg.className = "msg ok"; msg.textContent = "✅ ひらきます";
+      open_(html);
+    })
+    .catch(function(e){
+      bar.classList.remove("on"); btn.disabled = false;
+      try { localStorage.removeItem("la26_pass"); } catch(e2){}
+      msg.className = "msg err";
+      msg.textContent = (e && e.name === "OperationError")
+        ? "合い言葉が違うようです"
+        : "読み込めませんでした（" + (e.message || e.name) + "）";
+      $("p").value = ""; $("p").focus();
+    });
+}
+
+$("f").addEventListener("submit", function(e){
+  e.preventDefault();
+  var v = $("p").value.trim();
+  if (!v) { $("p").focus(); return; }
+  unlock(v, $("r").checked);
+});
+
+/* 記憶済みなら自動で開く */
+try {
+  var saved = localStorage.getItem("la26_pass");
+  if (saved) { $("f").style.display = "none"; unlock(saved, true); }
+} catch(e){}
+</script>
+</body>
+</html>
