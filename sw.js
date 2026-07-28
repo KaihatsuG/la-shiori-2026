@@ -1,7 +1,7 @@
 /* LA2026 しおり — オフライン用サービスワーカー
    方針：オンラインなら必ず最新を取りに行き、失敗したらキャッシュを返す。
    （以前は「キャッシュ優先」だったため、更新しても古い版が表示され続けていた） */
-var VERSION = "20260728-1121";
+var VERSION = "20260728-1131";
 var CACHE   = "la2026-" + VERSION;
 var ASSETS  = ["./", "index.html", "payload.json", "manifest.webmanifest", "icon.png"];
 
